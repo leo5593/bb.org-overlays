@@ -117,7 +117,7 @@ static int GetGpio(char *pin, int print) {
   strcat(cmd, pin_name);
   RunShellCmd(cmd, cmdout, sizeof(cmdout));
 
-  if(status == -1 || cmdout[0] == '\0') // Check for error or empty string (meaning pin could not be found)
+  if(status == -1 || cmdout[0] == '\0' || strlen(cmdout)<9) // Check for error or empty string (meaning pin could not be found)
     return -1;
 
   // Get GPIO chip (parse gpiofind output)
