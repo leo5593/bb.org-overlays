@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#cat AM335x.json | jq '.devicePins'
-#cat AM335x.json | jq '.useCases'
-#cat AM335x.json | jq '.packages .ID_0 .packagePin[202] .devicePinID'
+#cat AM62x.json | jq '.devicePins'
+#cat AM62x.json | jq '.useCases'
+#cat AM62x.json | jq '.packages .ID_0 .packagePin[202] .devicePinID'
 
 echo_both () {
 #	echo "$msg"
@@ -19,7 +19,7 @@ echo_label () {
 }
 
 echo_label_analog () {
-	msg="	/* ${pcbpin} (ZCZ ball ${ball})  ${label_info} */" ; echo_both ; msg="" ; echo_both
+	msg="	/* ${pcbpin} (ALW ball ${ball})  ${label_info} */" ; echo_both ; msg="" ; echo_both
 	echo "${pcbpin}_PIN=\"${label_pin}\"" >>${file}_config-pin.txt
 	echo "${pcbpin}_INFO=\"${label_info}\"" >>${file}_config-pin.txt
 	echo "${pcbpin}_CAPE=\"\"" >>${file}_config-pin.txt
@@ -28,9 +28,9 @@ echo_label_analog () {
 
 echo_pinmux () {
 	if [ "x${cp_default}" = "x" ] ; then
-		echo "	/* ${pcbpin} (ZCZ ball ${found_ball}) */" >> ${file}-pinmux.dts
+		echo "	/* ${pcbpin} (ALW ball ${found_ball}) */" >> ${file}-pinmux.dts
 	else
-		echo "	/* ${pcbpin} (ZCZ ball ${found_ball}) ${cp_default} */" >> ${file}-pinmux.dts
+		echo "	/* ${pcbpin} (ALW ball ${found_ball}) ${cp_default} */" >> ${file}-pinmux.dts
 		unset default_name
 	fi
 	echo "	${pcbpin}_pinmux {" >> ${file}-pinmux.dts
@@ -207,32 +207,23 @@ echo_gpio () {
 	echo "">> ${file}-gpio.dts
 
 	echo "#define gpio_${pcbpin} &${gpio_pinmux}" >> ${file}-a-bone-pins.h
-	echo "#define ${pcbpin}(mode) AM33XX_IOPAD(${cro}, mode)  /* ${found_ball}: ${PinID} */" >> ${file}-b-bone-pins.h
+	echo "#define ${pcbpin}(settings,mode)	AM62X_IOPAD(${cro}, settings, mode)  /* ${found_ball}: ${PinID} */" >> ${file}-b-bone-pins.h
 }
 
 get_json_pkg () {
-	###Offline: https://software-dl.ti.com/ccs/esd/pinmux/pinmux_release_archive.html
-	#pinmux_version="4.0.1526"
-	pinmux_version="4.0.1543"
-	if [ -d ./tmp/ ] ; then
-		rm -rf ./tmp/ || true
-	fi
-	wget -c https://downloads.ti.com/ccs/esd/pinmux/pinmux-${pinmux_version}-setup.run
-	chmod +x pinmux-${pinmux_version}-setup.run
-	mkdir tmp
-	./pinmux-${pinmux_version}-setup.run --unattendedmodeui none --mode unattended --prefix ./tmp
-	cp -v tmp/pinmux/deviceData/AM335x/AM335x.json ./
-	rm -rf ./tmp/ || true
-	rm -rf pinmux-${pinmux_version}-setup.run || true
-	rm -rf pinmux_${pinmux_version}.log || true
+	###Offline: https://dev.ti.com/sysconfig/deviceData/AM62x/AM62x.json
+
+	wget -c https://dev.ti.com/sysconfig/deviceData/AM62x/AM62x.json
+
+	exit
 }
 
 get_name_mode () {
-	#cat AM335x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .signalName' | sed 's/\"//g' | sed 's/\[/_/g' | sed 's/\]//g' || true
+	#cat AM62x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .signalName' | sed 's/\"//g' | sed 's/\[/_/g' | sed 's/\]//g' || true
 
-	name=$(cat AM335x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .signalName' | sed 's/\"//g' | sed 's/\[/_/g' | sed 's/\]//g' | awk '{print tolower($0)}' || true)
-	mode=$(cat AM335x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .mode' | sed 's/\"//g' | awk '{print tolower($0)}' || true)
-	ioDir=$(cat AM335x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .ioDir' | sed 's/\"//g' || true)
+	name=$(cat AM62x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .signalName' | sed 's/\"//g' | sed 's/\[/_/g' | sed 's/\]//g' | awk '{print tolower($0)}' || true)
+	mode=$(cat AM62x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .mode' | sed 's/\"//g' | awk '{print tolower($0)}' || true)
+	ioDir=$(cat AM62x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .ioDir' | sed 's/\"//g' || true)
 }
 
 find_ball () {
@@ -240,31 +231,28 @@ find_ball () {
 	echo "${pcbpin}"
 	#Use "ball" to get devicePinID & powerDomainID
 
-	#cat AM335x.json | jq '.packages .ID_0 .packagePin[0]'
+	#cat AM62x.json | jq '.packages .ID_1 .packagePin[0]'
 	#{
 	#  "devicePinID": "ID_1690",
 	#  "ball": "R13",
 	#  "powerDomainID": "ID_1691"
 	#}
 
-	for number in {0..202}
-	do
-		compare=$(cat AM335x.json | jq '.packages .ID_0 .packagePin['$number'] .ball' | sed 's/\"//g' || true)
+
+		compare=$(cat AM62x.json | jq ".packages.ID_1.packagePin[] | select(.ball==\"${ball}\").ball" | sed 's/\"//g' || true)
 		if [ "x${compare}" = "x${ball}" ] ; then
 			#echo "debug-${ball}-----------------------------------------"
-			#cat AM335x.json | jq '.packages .ID_0 .packagePin['$number']'
+			#cat AM62x.json | jq '.packages .ID_1 .packagePin['$number']'
 			#echo "debug-${ball}-----------------------------------------"
-			found_devicePinID=$(cat AM335x.json | jq '.packages .ID_0 .packagePin['$number'] .devicePinID' | sed 's/\"//g' || true)
-			found_ball=$(cat AM335x.json | jq '.packages .ID_0 .packagePin['$number'] .ball' | sed 's/\"//g' || true)
-			found_powerDomainID=$(cat AM335x.json | jq '.packages .ID_0 .packagePin['$number'] .powerDomainID' | sed 's/\"//g' || true)
+			found_devicePinID=$(cat AM62x.json | jq ".packages.ID_1.packagePin[] | select(.ball==\"${ball}\").devicePinID" | sed 's/\"//g' || true)
+			found_ball=$(cat AM62x.json | jq ".packages.ID_1.packagePin[] | select(.ball==\"${ball}\").ball" | sed 's/\"//g' || true)
+			found_powerDomainID=$(cat AM62x.json | jq ".packages.ID_1.packagePin[] | select(.ball==\"${ball}\").powerDomainID" | sed 's/\"//g' || true)
 			echo "devicePinID=${found_devicePinID},ball=${found_ball},powerDomainID=${found_powerDomainID}"
-			break;
 		fi
-	done
 
 	#Using devicePinID find name
 
-	#cat AM335x.json | jq '.devicePins .ID_1985'
+	#cat AM62x.json | jq '.devicePins .ID_1985'
 	#{
 	#  "type": "DevicePin",
 	#  "name": "lcd_hsync",
@@ -274,14 +262,14 @@ find_ball () {
 	#}
 
 	#echo "debug-${ball}-----------------------------------------"
-	#cat AM335x.json | jq '.devicePins .'${found_devicePinID}''
+	#cat AM62x.json | jq '.devicePins .'${found_devicePinID}''
 	#echo "debug-${ball}-----------------------------------------"
-	PinID=$(cat AM335x.json | jq '.devicePins .'${found_devicePinID}' .name' | sed 's/\"//g' || true)
+	PinID=$(cat AM62x.json | jq '.devicePins .'${found_devicePinID}' .name' | sed 's/\"//g' || true)
 	echo "name=${PinID}"
 
 	#Using devicePinID find controlRegisterOffset
 
-	#cat AM335x.json | jq '.pinCommonInfos .ID_1985'
+	#cat AM62x.json | jq '.pinCommonInfos .ID_1985'
 	#{
 	#  "type": "PinCommonInfo",
 	#  "devicePinID": "ID_1985",
@@ -290,17 +278,17 @@ find_ball () {
 	#  "pupdStateAfterHHV": "PD",
 
 	#echo "debug-${ball}-----------------------------------------"
-	#cat AM335x.json | jq '.pinCommonInfos .'${found_devicePinID}''
+	#cat AM62x.json | jq '.pinCommonInfos .'${found_devicePinID}''
 	#echo "debug-${ball}-----------------------------------------"
-	cro=$(cat AM335x.json | jq '.pinCommonInfos .'${found_devicePinID}' .controlRegisterOffset' | sed 's/\"//g' || true)
+	cro=$(cat AM62x.json | jq '.pinCommonInfos .'${found_devicePinID}' .controlRegisterOffset' | sed 's/\"//g' || true)
 	echo "controlRegisterOffset=${cro}"
 
 	unset pupdStateDuringHHV
-	pupdStateDuringHHV=$(cat AM335x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pupdStateDuringHHV' | sed 's/\"//g' || true)
+	pupdStateDuringHHV=$(cat AM62x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pupdStateDuringHHV' | sed 's/\"//g' || true)
 	echo "pupdStateDuringHHV=${pupdStateDuringHHV}"
 
 	unset pupdStateAfterHHV
-	pupdStateAfterHHV=$(cat AM335x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pupdStateAfterHHV' | sed 's/\"//g' || true)
+	pupdStateAfterHHV=$(cat AM62x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pupdStateAfterHHV' | sed 's/\"//g' || true)
 	echo "pupdStateAfterHHV=${pupdStateAfterHHV}"
 
 	#  "pinModeInfo": [
@@ -363,10 +351,13 @@ find_ball () {
 	#  ]
 	#}
 
-	for number in {0..7}
+
+	length=$(cat AM62x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo | length' )
+
+	for number in {0..15}
 	do
-		cat AM335x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .interfaceName'
-		compare=$(cat AM335x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .interfaceName' | sed 's/\"//g' || true)
+		cat AM62x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .interfaceName'
+		compare=$(cat AM62x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .interfaceName' | sed 's/\"//g' || true)
 		get_name_mode
 		echo ${pcbpin}:${ball}:${name}:${mode}:${ioDir}:${number}
 
@@ -375,8 +366,17 @@ find_ball () {
 #		fi
 
 		if [ "x${mode}" = "x${default_mode}" ] ; then
-			echo default_mode=index=${number}
+			echo default_mode=index=${number}   ${name}    ${cp_default} 
 			default_index=${number}
+		fi
+
+		if [ "x${mode}" = "x${gpio_mode}" ] ; then
+			echo gpio_mode=index=${number}
+			gpio_index=${number}
+		fi
+
+		if [ $number -ge $(($length-1)) ]; then
+			break
 		fi
 	done
 
@@ -393,10 +393,10 @@ find_ball () {
 	esac
 
 	if [ ! "x${use_name}" = "x" ] ; then
-		echo "	/* ${pcbpin} (ZCZ ball ${found_ball}) ${PinID} (${use_name}) */" >> ${file}.dts
+		echo "	/* ${pcbpin} (ALW ball ${found_ball}) ${PinID} (${use_name}) */" >> ${file}.dts
 		unset use_name
 	else
-		echo "	/* ${pcbpin} (ZCZ ball ${found_ball}) ${PinID} (${name}) */" >> ${file}.dts
+		echo "	/* ${pcbpin} (ALW ball ${found_ball}) ${PinID} (${name}) */" >> ${file}.dts
 	fi
 	cp_info_default=${name}
 
@@ -420,6 +420,10 @@ find_ball () {
 	emmc|hdmi|audio)
 		pinsetting="PIN_OUTPUT_PULLDOWN | INPUT_EN"
 		;;
+	disable)
+		pinsetting="PIN_DISABLE"
+		
+		;;
 	*)
 		if [ ! "x$cp_default" = "x" ] ; then
 			exit 2
@@ -433,35 +437,61 @@ find_ball () {
 		;;
 		*)
 			echo "pupdStateAfterHHV was not defined [${pupdStateAfterHHV}]"
-			exit 2
+			pinsetting="PIN_INPUT"
+			#exit 2 # //todo check
 		;;
 
 		esac
 		;;
 	esac
 
-#	echo "	${pcbpin}_default_pin: pinmux_${pcbpin}_default_pin { pinctrl-single,pins = <" >> ${file}.dts
-#	echo "		${pcbpin}( ${pinsetting} | MUX_MODE${mode}) >; };	/* ${PinID}.${name} */" >> ${file}.dts
-	echo "	BONE_PIN(${pcbpin}, default, ${pcbpin}(${pinsetting} | MUX_MODE${mode}))" >> ${file}.dts
+	pina_disable=""
+	pina_disable_def=""
+	if [ "x$pcbpinA" != "x" ]; then
+		pina_disable="${pcbpinA}( PIN_DISABLE , MUX_MODE7)"
+ 		
+		if [ "$pinsetting" != "PIN_DISABLE" ]; then
+			pina_disable_def="${pcbpinA}( PIN_DISABLE , MUX_MODE7)"
+		fi
+
+		unset pcbpinA
+	fi
+
+	echo "	${pcbpin}_default_pin: pinmux_${pcbpin}_default_pin { pinctrl-single,pins = <" >> ${file}.dts
+	echo "		${pcbpin}( ${pinsetting} , MUX_MODE${mode}) ${pina_disable_def} >; };	/* ${PinID}.${name} */" >> ${file}.dts
+	echo "" >> ${file}.dts
+#	echo "	BONE_PIN(${pcbpin}, default, ${pcbpin}(${pinsetting} | MUX_MODE${mode}))" >> ${file}.dts
 
 	number=${gpio_index}
 	get_name_mode
 
-#	echo "	${pcbpin}_gpio_pin: pinmux_${pcbpin}_gpio_pin { pinctrl-single,pins = <" >> ${file}.dts
-#	echo "		${pcbpin}( PIN_OUTPUT | INPUT_EN | MUX_MODE${mode}) >; };			/* ${PinID}.${name} */" >> ${file}.dts
-	echo "	BONE_PIN(${pcbpin}, gpio, ${pcbpin}(PIN_OUTPUT | INPUT_EN | MUX_MODE${mode}))" >> ${file}.dts
-#	echo "	${pcbpin}_gpio_pu_pin: pinmux_${pcbpin}_gpio_pu_pin { pinctrl-single,pins = <" >> ${file}.dts
-#	echo "		${pcbpin}( PIN_OUTPUT_PULLUP | INPUT_EN | MUX_MODE${mode}) >; };		/* ${PinID}.${name} */" >> ${file}.dts
-	echo "	BONE_PIN(${pcbpin}, gpio_pu, ${pcbpin}(PIN_OUTPUT_PULLUP | INPUT_EN | MUX_MODE${mode}))" >> ${file}.dts
-#	echo "	${pcbpin}_gpio_pd_pin: pinmux_${pcbpin}_gpio_pd_pin { pinctrl-single,pins = <" >> ${file}.dts
-#	echo "		${pcbpin}( PIN_OUTPUT_PULLDOWN | INPUT_EN | MUX_MODE${mode}) >; };	/* ${PinID}.${name} */" >> ${file}.dts
-	echo "	BONE_PIN(${pcbpin}, gpio_pd, ${pcbpin}(PIN_OUTPUT_PULLDOWN | INPUT_EN | MUX_MODE${mode}))" >> ${file}.dts
+	echo "	${pcbpin}_gpio_pin: pinmux_${pcbpin}_gpio_pin { pinctrl-single,pins = <" >> ${file}.dts
+	echo "		${pcbpin}( PIN_OUTPUT | INPUT_EN , MUX_MODE${mode}) ${pina_disable} >; };			/* ${PinID}.${name} */" >> ${file}.dts
+	echo "" >> ${file}.dts
+#	echo "	BONE_PIN(${pcbpin}, gpio, ${pcbpin}(PIN_OUTPUT | INPUT_EN | MUX_MODE${mode}))" >> ${file}.dts
 
+	echo "	${pcbpin}_gpio_pu_pin: pinmux_${pcbpin}_gpio_pu_pin { pinctrl-single,pins = <" >> ${file}.dts
+	echo "		${pcbpin}( PIN_OUTPUT_PULLUP | INPUT_EN , MUX_MODE${mode}) ${pina_disable} >; };		/* ${PinID}.${name} */" >> ${file}.dts
+	echo "" >> ${file}.dts
+#	echo "	BONE_PIN(${pcbpin}, gpio_pu, ${pcbpin}(PIN_OUTPUT_PULLUP | INPUT_EN | MUX_MODE${mode}))" >> ${file}.dts
+
+	echo "	${pcbpin}_gpio_pd_pin: pinmux_${pcbpin}_gpio_pd_pin { pinctrl-single,pins = <" >> ${file}.dts
+	echo "		${pcbpin}( PIN_OUTPUT_PULLDOWN | INPUT_EN , MUX_MODE${mode}) ${pina_disable} >; };	/* ${PinID}.${name} */" >> ${file}.dts
+	echo "" >> ${file}.dts
+#	echo "	BONE_PIN(${pcbpin}, gpio_pd, ${pcbpin}(PIN_OUTPUT_PULLDOWN | INPUT_EN | MUX_MODE${mode}))" >> ${file}.dts
+
+
+
+	echo ${name}
+
+	#// Todo check 
 	gpio_mul=$(echo ${name} | awk -F'_' '{print $1}' | awk -F'gpio' '{print $2}' || true)
 	gpio_add=$(echo ${name} | awk -F'_' '{print $2}' || true)
 	cp_gpio_number=$(echo "${gpio_mul} * 32" | bc)
 	cp_gpio_number=$(echo "${cp_gpio_number} + ${gpio_add}" | bc)
 	cp_pru_gpio_number=$(echo "${cp_gpio_number} + 32" | bc)
+
+
 
 	gpio_name=${name}
 	gpio_pinmux=$(echo ${gpio_name} | sed 's/_/ /g')
@@ -481,10 +511,11 @@ find_ball () {
 	unset got_timer_pin
 	unset got_uart_pin
 
-	for number in {0..7}
+	
+	for number in {0..15}
 	do
-		cat AM335x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .interfaceName'
-		compare=$(cat AM335x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .interfaceName' | sed 's/\"//g' || true)
+		cat AM62x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .interfaceName'
+		compare=$(cat AM62x.json | jq '.pinCommonInfos .'${found_devicePinID}' .pinModeInfo['$number'] .interfaceName' | sed 's/\"//g' || true)
 		get_name_mode
 		if [ ! "x${name}" = "xnull" ] ; then
 			echo ${name}
@@ -543,20 +574,26 @@ find_ball () {
 				pinsetting="PIN_OUTPUT_PULLDOWN | INPUT_EN"
 				got_pru_ecap_pin="enable"
 				;;
+			pr0_uart0*)
+				valid_pin_mode="pru_uart"
+				pinsetting="PIN_OUTPUT_PULLUP | INPUT_EN"
+				got_pru_uart_pin="enable"
+				tabs=2
+				;;
 			pr1_uart0*)
 				valid_pin_mode="pru_uart"
 				pinsetting="PIN_OUTPUT_PULLUP | INPUT_EN"
 				got_pru_uart_pin="enable"
 				tabs=2
 				;;
-			pr1_pru*_pru_r30*)
+			pr*_pru*_gpo*)				  #pr1_pru*_pru_r30*)
 				valid_pin_mode="pruout"
 				pruout_name=$(echo ${name} | sed 's/pr1_//g' | sed 's/pru_r30_/out/g')
 				name=${pruout_name}
 				pinsetting="PIN_OUTPUT_PULLDOWN | INPUT_EN"
 				got_pruout_pin="enable"
 				;;
-			pr1_pru*_pru_r31*)
+			pr*_pru*_gpi*)
 				valid_pin_mode="pruin"
 				pruin_name=$(echo ${name} | sed 's/pr1_//g' | sed 's/pru_r31_/in/g')
 				name=${pruin_name}
@@ -614,12 +651,19 @@ find_ball () {
 			esac
 
 			if [ ! "x${valid_pin_mode}" = "x" ] ; then
-				#echo "	${pcbpin}_${valid_pin_mode}_pin: pinmux_${pcbpin}_${valid_pin_mode}_pin { pinctrl-single,pins = <" >> ${file}.dts
-				#echo "		${pcbpin}( ${pinsetting} | MUX_MODE${mode}) >; };	/* ${PinID}.${name} */" >> ${file}.dts
-				echo "	BONE_PIN(${pcbpin}, ${valid_pin_mode}, ${pcbpin}(${pinsetting} | MUX_MODE${mode}))" >> ${file}.dts
+				echo "	${pcbpin}_${valid_pin_mode}_pin: pinmux_${pcbpin}_${valid_pin_mode}_pin { pinctrl-single,pins = <" >> ${file}.dts
+				echo "		${pcbpin}( ${pinsetting} , MUX_MODE${mode}) ${pina_disable} >; };	/* ${PinID}.${name} */" >> ${file}.dts
+				#echo "	BONE_PIN(${pcbpin}, ${valid_pin_mode}, ${pcbpin}(${pinsetting} | MUX_MODE${mode}))" >> ${file}.dts
 			fi
 		fi
+
+		if [ $number -ge $(($length-1)) ]; then
+			break
+		fi
 	done
+
+
+
 
 echo "" >> ${file}.dts
 echo_pinmux
@@ -662,6 +706,6 @@ echo_gpio
 	echo "##################"
 }
 
-if [ ! -f AM335x.json ] ; then
+if [ ! -f AM62x.json ] ; then
 	get_json_pkg
 fi
