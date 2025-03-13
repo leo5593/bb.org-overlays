@@ -104,15 +104,35 @@ echo_pinmux () {
 		cp_pinmux="${cp_pinmux} pru_ecap_pwm"
 		cp_info="${cp_info} pru_ecap_pwm"
 	fi
-	if [ "x${got_pruout_pin}" = "xenable" ] ; then
+	if [ "x${got_pru0out_pin}" = "xenable" ] ; then
 		list="${list}, \"pruout\""
-		cp_pinmux="${cp_pinmux} pruout"
+		cp_pinmux="${cp_pinmux} pru0out"
 		cp_info="${cp_info} ${pruout_name}"
 	fi
-	if [ "x${got_pruin_pin}" = "xenable" ] ; then
+	if [ "x${got_pru0in_pin}" = "xenable" ] ; then
 		list="${list}, \"pruin\""
-		cp_pinmux="${cp_pinmux} pruin"
+		cp_pinmux="${cp_pinmux} pru0in"
 		cp_info="${cp_info} ${pruin_name}"
+	fi
+	if [ "x${got_pru1out_pin}" = "xenable" ] ; then
+		list="${list}, \"pru1out\""
+		cp_pinmux="${cp_pinmux} pru1out"
+		cp_info="${cp_info} ${pruout_name}"
+	fi
+	if [ "x${got_pru1in_pin}" = "xenable" ] ; then
+		list="${list}, \"pru1in\""
+		cp_pinmux="${cp_pinmux} pru1in"
+		cp_info="${cp_info} ${pruin_name}"
+	fi
+	if [ "x${got_mcu_uart_pin}" = "xenable" ] ; then
+		list="${list}, \"mcu_uart\""
+		cp_pinmux="${cp_pinmux} mcu_uart"
+		cp_info="${cp_info} mcu_uart"
+	fi
+	if [ "x${got_mcu_timer_pin}" = "xenable" ] ; then
+		list="${list}, \"mcu_timer\""
+		cp_pinmux="${cp_pinmux} mcu_timer"
+		cp_info="${cp_info} ${timer_name}"
 	fi
 
 	echo "${pcbpin}_PRU=\"${cp_pru_gpio_number}\"" >> ${file}_config-pin.txt
@@ -125,71 +145,92 @@ echo_pinmux () {
 		unset cp_default
 	fi
 
+	pinctrlADisable=""
+	if [ "x${pcbpinA}" != "x" ]; then
+		pinctrlADisable="&${pcbpinA}_disable_pin "
+	fi
+
 	echo "${pcbpin}_PINMUX=\"${cp_pinmux}\"" >> ${file}_config-pin.txt
 	echo "${pcbpin}_INFO=\"${cp_info}\"" >> ${file}_config-pin.txt
 	echo "${pcbpin}_CAPE=\"\"" >> ${file}_config-pin.txt
 	echo "" >> ${file}_config-pin.txt
 
 	echo "		pinctrl-names = ${list};" >> ${file}-pinmux.dts
-	echo "		pinctrl-0 = <&${pcbpin}_default_pin>;" >> ${file}-pinmux.dts
-	echo "		pinctrl-1 = <&${pcbpin}_gpio_pin>;" >> ${file}-pinmux.dts
-	echo "		pinctrl-2 = <&${pcbpin}_gpio_pu_pin>;" >> ${file}-pinmux.dts
-	echo "		pinctrl-3 = <&${pcbpin}_gpio_pd_pin>;" >> ${file}-pinmux.dts
+	echo "		pinctrl-0 = <${pinctrlADisable}&${pcbpin}_default_pin>;" >> ${file}-pinmux.dts
+	echo "		pinctrl-1 = <${pinctrlADisable}&${pcbpin}_gpio_pin>;" >> ${file}-pinmux.dts
+	echo "		pinctrl-2 = <${pinctrlADisable}&${pcbpin}_gpio_pu_pin>;" >> ${file}-pinmux.dts
+	echo "		pinctrl-3 = <${pinctrlADisable}&${pcbpin}_gpio_pd_pin>;" >> ${file}-pinmux.dts
 	index=4
 	if [ "x${got_spi_pin}" = "xenable" ] ; then
-		echo "		pinctrl-${index} = <&${pcbpin}_spi_pin>;" >> ${file}-pinmux.dts
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_spi_pin>;" >> ${file}-pinmux.dts
 		index=$((index + 1))
 	fi
 	if [ "x${got_spi_cs_pin}" = "xenable" ] ; then
-		echo "		pinctrl-${index} = <&${pcbpin}_spi_cs_pin>;" >> ${file}-pinmux.dts
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_spi_cs_pin>;" >> ${file}-pinmux.dts
 		index=$((index + 1))
 	fi
 	if [ "x${got_spi_sclk_pin}" = "xenable" ] ; then
-		echo "		pinctrl-${index} = <&${pcbpin}_spi_sclk_pin>;" >> ${file}-pinmux.dts
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_spi_sclk_pin>;" >> ${file}-pinmux.dts
 		index=$((index + 1))
 	fi
 	if [ "x${got_uart_pin}" = "xenable" ] ; then
-		echo "		pinctrl-${index} = <&${pcbpin}_uart_pin>;" >> ${file}-pinmux.dts
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_uart_pin>;" >> ${file}-pinmux.dts
 		index=$((index + 1))
 	fi
 	if [ "x${got_can_pin}" = "xenable" ] ; then
-		echo "		pinctrl-${index} = <&${pcbpin}_can_pin>;" >> ${file}-pinmux.dts
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_can_pin>;" >> ${file}-pinmux.dts
 		index=$((index + 1))
 	fi
 	if [ "x${got_i2c_pin}" = "xenable" ] ; then
-		echo "		pinctrl-${index} = <&${pcbpin}_i2c_pin>;" >> ${file}-pinmux.dts
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_i2c_pin>;" >> ${file}-pinmux.dts
 		index=$((index + 1))
 	fi
 	if [ "x${got_eqep_pin}" = "xenable" ] ; then
-		echo "		pinctrl-${index} = <&${pcbpin}_eqep_pin>;" >> ${file}-pinmux.dts
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_eqep_pin>;" >> ${file}-pinmux.dts
 		index=$((index + 1))
 	fi
 	if [ "x${got_pwm_pin}" = "xenable" ] ; then
-		echo "		pinctrl-${index} = <&${pcbpin}_pwm_pin>;" >> ${file}-pinmux.dts
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_pwm_pin>;" >> ${file}-pinmux.dts
 		index=$((index + 1))
 	fi
 	if [ "x${got_pwm2_pin}" = "xenable" ] ; then
-		echo "		pinctrl-${index} = <&${pcbpin}_pwm2_pin>;" >> ${file}-pinmux.dts
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_pwm2_pin>;" >> ${file}-pinmux.dts
 		index=$((index + 1))
 	fi
 	if [ "x${got_pru_uart_pin}" = "xenable" ] ; then
-		echo "		pinctrl-${index} = <&${pcbpin}_pru_uart_pin>;" >> ${file}-pinmux.dts
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_pru_uart_pin>;" >> ${file}-pinmux.dts
 		index=$((index + 1))
 	fi
 	if [ "x${got_pru_ecap_pin}" = "xenable" ] ; then
-		echo "		pinctrl-${index} = <&${pcbpin}_pru_ecap_pwm_pin>;" >> ${file}-pinmux.dts
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_pru_ecap_pwm_pin>;" >> ${file}-pinmux.dts
 		index=$((index + 1))
 	fi
 	if [ "x${got_timer_pin}" = "xenable" ] ; then
-		echo "		pinctrl-${index} = <&${pcbpin}_timer_pin>;" >> ${file}-pinmux.dts
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_timer_pin>;" >> ${file}-pinmux.dts
 		index=$((index + 1))
 	fi
-	if [ "x${got_pruout_pin}" = "xenable" ] ; then
-		echo "		pinctrl-${index} = <&${pcbpin}_pruout_pin>;" >> ${file}-pinmux.dts
+	if [ "x${got_pru0out_pin}" = "xenable" ] ; then
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_pru0out_pin>;" >> ${file}-pinmux.dts
 		index=$((index + 1))
 	fi
-	if [ "x${got_pruin_pin}" = "xenable" ] ; then
-		echo "		pinctrl-${index} = <&${pcbpin}_pruin_pin>;" >> ${file}-pinmux.dts
+	if [ "x${got_pru0in_pin}" = "xenable" ] ; then
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_pru0in_pin>;" >> ${file}-pinmux.dts
+		index=$((index + 1))
+	fi
+	if [ "x${got_pru1out_pin}" = "xenable" ] ; then
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_pru1out_pin>;" >> ${file}-pinmux.dts
+		index=$((index + 1))
+	fi
+	if [ "x${got_pru1in_pin}" = "xenable" ] ; then
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_pru1in_pin>;" >> ${file}-pinmux.dts
+		index=$((index + 1))
+	fi
+	if [ "x${got_mcu_uart_pin}" = "xenable" ] ; then
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_mcu_uart_pin>;" >> ${file}-pinmux.dts
+		index=$((index + 1))
+	fi
+	if [ "x${got_mcu_timer_pin}" = "xenable" ] ; then
+		echo "		pinctrl-${index} = <${pinctrlADisable}&${pcbpin}_mcu_timer_pin>;" >> ${file}-pinmux.dts
 		index=$((index + 1))
 	fi
 
@@ -198,9 +239,18 @@ echo_pinmux () {
 }
 
 echo_gpio () {
+
+	if [ "x$(echo $gpio_pinmux | grep mcu)" != "x" ]; then
+
+		#echo "#define gpio_${pcbpin} &${gpio_pinmux}" >> ${file}-a-bone-pins.h
+		echo "#define ${pcbpin}(settings,mode)	AM62X_MCU_IOPAD(${cro}, settings, mode)  /* ${found_ball}: ${PinID} */" >> ${file}-b-bone-pins.h
+
+		return;
+	fi
+
 	echo "		${pcbpin} {" >> ${file}-gpio.dts
 	echo "			gpio-name = \"${pcbpin}\";" >> ${file}-gpio.dts
-	echo "			gpio = <&${gpio_pinmux} 0>;" >> ${file}-gpio.dts
+	echo "			gpio = <&main_${gpio_pinmux} 0>;" >> ${file}-gpio.dts
 	echo "			input;" >> ${file}-gpio.dts
 	echo "			dir-changeable;" >> ${file}-gpio.dts
 	echo "		};" >> ${file}-gpio.dts
@@ -208,6 +258,7 @@ echo_gpio () {
 
 	echo "#define gpio_${pcbpin} &${gpio_pinmux}" >> ${file}-a-bone-pins.h
 	echo "#define ${pcbpin}(settings,mode)	AM62X_IOPAD(${cro}, settings, mode)  /* ${found_ball}: ${PinID} */" >> ${file}-b-bone-pins.h
+
 }
 
 get_json_pkg () {
@@ -266,6 +317,18 @@ find_ball () {
 	#echo "debug-${ball}-----------------------------------------"
 	PinID=$(cat AM62x.json | jq '.devicePins .'${found_devicePinID}' .name' | sed 's/\"//g' || true)
 	echo "name=${PinID}"
+
+	
+
+	if [ "$(echo ${PinID} | grep "MCU_")" != "" ]; then
+		fileDTS="${file}-mcu.dts"
+		
+	else
+		fileDTS="${file}.dts"
+	fi
+
+
+	
 
 	#Using devicePinID find controlRegisterOffset
 
@@ -362,7 +425,7 @@ find_ball () {
 		echo ${pcbpin}:${ball}:${name}:${mode}:${ioDir}:${number}
 
 #		if [ ! "x${name}" = "xnull" ] ; then
-#			echo "/* ${pcbpin}:${ball}:${name}:${mode}:${ioDir} */" >> ${file}.dts
+#			echo "/* ${pcbpin}:${ball}:${name}:${mode}:${ioDir} */" >> ${fileDTS}
 #		fi
 
 		if [ "x${mode}" = "x${default_mode}" ] ; then
@@ -393,10 +456,10 @@ find_ball () {
 	esac
 
 	if [ ! "x${use_name}" = "x" ] ; then
-		echo "	/* ${pcbpin} (ALW ball ${found_ball}) ${PinID} (${use_name}) */" >> ${file}.dts
+		echo "	/* ${pcbpin} (ALW ball ${found_ball}) ${PinID} (${use_name}) */" >> ${fileDTS}
 		unset use_name
 	else
-		echo "	/* ${pcbpin} (ALW ball ${found_ball}) ${PinID} (${name}) */" >> ${file}.dts
+		echo "	/* ${pcbpin} (ALW ball ${found_ball}) ${PinID} (${name}) */" >> ${fileDTS}
 	fi
 	cp_info_default=${name}
 
@@ -448,37 +511,39 @@ find_ball () {
 	pina_disable=""
 	pina_disable_def=""
 	if [ "x$pcbpinA" != "x" ]; then
-		pina_disable="${pcbpinA}( PIN_DISABLE , MUX_MODE7)"
+		#pina_disable="${pcbpinA}( PIN_DISABLE , 7)"
  		
-		if [ "$pinsetting" != "PIN_DISABLE" ]; then
-			pina_disable_def="${pcbpinA}( PIN_DISABLE , MUX_MODE7)"
-		fi
+		#if [ "$pinsetting" != "PIN_DISABLE" ]; then
+		#	pina_disable_def="${pcbpinA}( PIN_DISABLE , 7)"
+		#fi
 
-		unset pcbpinA
+		echo "	${pcbpin}_disable_pin: pinmux_${pcbpin}_disable_pin { pinctrl-single,pins = <" >> ${fileDTS}
+		echo "		${pcbpin}( PIN_DISABLE , 7) >; };	/* ${PinID}.${name} */" >> ${fileDTS}
+		#unset pcbpinA
 	fi
 
-	echo "	${pcbpin}_default_pin: pinmux_${pcbpin}_default_pin { pinctrl-single,pins = <" >> ${file}.dts
-	echo "		${pcbpin}( ${pinsetting} , MUX_MODE${mode}) ${pina_disable_def} >; };	/* ${PinID}.${name} */" >> ${file}.dts
-	echo "" >> ${file}.dts
-#	echo "	BONE_PIN(${pcbpin}, default, ${pcbpin}(${pinsetting} | MUX_MODE${mode}))" >> ${file}.dts
+	echo "	${pcbpin}_default_pin: pinmux_${pcbpin}_default_pin { pinctrl-single,pins = <" >> ${fileDTS}
+	echo "		${pcbpin}( ${pinsetting} , ${mode}) ${pina_disable_def} >; };	/* ${PinID}.${name} */" >> ${fileDTS}
+#	echo "" >> ${fileDTS}
+#	echo "	BONE_PIN(${pcbpin}, default, ${pcbpin}(${pinsetting} | ${mode}))" >> ${fileDTS}
 
 	number=${gpio_index}
 	get_name_mode
 
-	echo "	${pcbpin}_gpio_pin: pinmux_${pcbpin}_gpio_pin { pinctrl-single,pins = <" >> ${file}.dts
-	echo "		${pcbpin}( PIN_OUTPUT | INPUT_EN , MUX_MODE${mode}) ${pina_disable} >; };			/* ${PinID}.${name} */" >> ${file}.dts
-	echo "" >> ${file}.dts
-#	echo "	BONE_PIN(${pcbpin}, gpio, ${pcbpin}(PIN_OUTPUT | INPUT_EN | MUX_MODE${mode}))" >> ${file}.dts
+	echo "	${pcbpin}_gpio_pin: pinmux_${pcbpin}_gpio_pin { pinctrl-single,pins = <" >> ${fileDTS}
+	echo "		${pcbpin}( PIN_OUTPUT | INPUT_EN , ${mode}) ${pina_disable} >; };			/* ${PinID}.${name} */" >> ${fileDTS}
+#	echo "" >> ${fileDTS}
+#	echo "	BONE_PIN(${pcbpin}, gpio, ${pcbpin}(PIN_OUTPUT | INPUT_EN | ${mode}))" >> ${fileDTS}
 
-	echo "	${pcbpin}_gpio_pu_pin: pinmux_${pcbpin}_gpio_pu_pin { pinctrl-single,pins = <" >> ${file}.dts
-	echo "		${pcbpin}( PIN_OUTPUT_PULLUP | INPUT_EN , MUX_MODE${mode}) ${pina_disable} >; };		/* ${PinID}.${name} */" >> ${file}.dts
-	echo "" >> ${file}.dts
-#	echo "	BONE_PIN(${pcbpin}, gpio_pu, ${pcbpin}(PIN_OUTPUT_PULLUP | INPUT_EN | MUX_MODE${mode}))" >> ${file}.dts
+	echo "	${pcbpin}_gpio_pu_pin: pinmux_${pcbpin}_gpio_pu_pin { pinctrl-single,pins = <" >> ${fileDTS}
+	echo "		${pcbpin}( PIN_OUTPUT_PULLUP | INPUT_EN , ${mode}) ${pina_disable} >; };		/* ${PinID}.${name} */" >> ${fileDTS}
+#	echo "" >> ${fileDTS}
+#	echo "	BONE_PIN(${pcbpin}, gpio_pu, ${pcbpin}(PIN_OUTPUT_PULLUP | INPUT_EN | ${mode}))" >> ${fileDTS}
 
-	echo "	${pcbpin}_gpio_pd_pin: pinmux_${pcbpin}_gpio_pd_pin { pinctrl-single,pins = <" >> ${file}.dts
-	echo "		${pcbpin}( PIN_OUTPUT_PULLDOWN | INPUT_EN , MUX_MODE${mode}) ${pina_disable} >; };	/* ${PinID}.${name} */" >> ${file}.dts
-	echo "" >> ${file}.dts
-#	echo "	BONE_PIN(${pcbpin}, gpio_pd, ${pcbpin}(PIN_OUTPUT_PULLDOWN | INPUT_EN | MUX_MODE${mode}))" >> ${file}.dts
+	echo "	${pcbpin}_gpio_pd_pin: pinmux_${pcbpin}_gpio_pd_pin { pinctrl-single,pins = <" >> ${fileDTS}
+	echo "		${pcbpin}( PIN_OUTPUT_PULLDOWN | INPUT_EN , ${mode}) ${pina_disable} >; };	/* ${PinID}.${name} */" >> ${fileDTS}
+#	echo "" >> ${fileDTS}
+#	echo "	BONE_PIN(${pcbpin}, gpio_pd, ${pcbpin}(PIN_OUTPUT_PULLDOWN | INPUT_EN | ${mode}))" >> ${fileDTS}
 
 
 
@@ -503,13 +568,21 @@ find_ball () {
 	unset got_i2c_pin
 	unset got_pru_ecap_pin
 	unset got_pru_uart_pin
-	unset got_pruout_pin
-	unset got_pruin_pin
+	unset got_pru0out_pin
+	unset got_pru0in_pin
+	unset got_pru1out_pin
+	unset got_pru1in_pin
 	unset got_spi_pin
 	unset got_spi_cs_pin
 	unset got_spi_sclk_pin
 	unset got_timer_pin
 	unset got_uart_pin
+	unset got_mcu_spi_pin
+	unset got_mcu_spi_cs_pin
+	unset got_mcu_spi_sclk_pin
+	unset got_mcu_timer_pin
+	unset got_mcu_uart_pin
+
 
 	
 	for number in {0..15}
@@ -524,14 +597,28 @@ find_ball () {
 
 			tabs=1
 			case "${name}" in 
-			dcan*_rx)
+			mcan*_rx)
 				can_name=${name}
 				valid_pin_mode="can"
 				pinsetting="PIN_INPUT_PULLUP"
 				got_can_pin="enable"
 				tabs=3
 				;;
-			dcan*_tx)
+			mcan*_tx)
+				can_name=${name}
+				valid_pin_mode="can"
+				pinsetting="PIN_OUTPUT_PULLUP"
+				got_can_pin="enable"
+				tabs=3
+				;;
+			mcu_mcan*_rx)
+				can_name=${name}
+				valid_pin_mode="can"
+				pinsetting="PIN_INPUT_PULLUP"
+				got_can_pin="enable"
+				tabs=3
+				;;
+			mcu_mcan*_tx)
 				can_name=${name}
 				valid_pin_mode="can"
 				pinsetting="PIN_OUTPUT_PULLUP"
@@ -545,13 +632,13 @@ find_ball () {
 				got_eqep_pin="enable"
 				tabs=2
 				;;
-			ehrpwm*|ecap0_in_pwm0_out)
+			ehrpwm*_a|ehrpwm*_b|ecap0_in_pwm0_out)
 				valid_pin_mode="pwm"
 				pwm_name=${name}
 				pinsetting="PIN_OUTPUT_PULLDOWN | INPUT_EN"
 				got_pwm_pin="enable"
 				;;
-			ecap2_in_pwm2_out)
+			ecap*_in_apwm_out)
 				#ignore PocketBeagle...
 				if [ ! "x${file}" = "xPocketBeagle" ] ; then
 				if [ ! "x${file}" = "xBeagleBone_Blue" ] ; then
@@ -586,19 +673,34 @@ find_ball () {
 				got_pru_uart_pin="enable"
 				tabs=2
 				;;
-			pr*_pru*_gpo*)				  #pr1_pru*_pru_r30*)
-				valid_pin_mode="pruout"
+			pr*_pru1_gpo*)				  #pr1_pru*_pru_r30*)
+				valid_pin_mode="pru1out"
 				pruout_name=$(echo ${name} | sed 's/pr1_//g' | sed 's/pru_r30_/out/g')
 				name=${pruout_name}
 				pinsetting="PIN_OUTPUT_PULLDOWN | INPUT_EN"
-				got_pruout_pin="enable"
+				got_pru1out_pin="enable"
 				;;
-			pr*_pru*_gpi*)
-				valid_pin_mode="pruin"
+			pr*_pru1_gpi*)
+				valid_pin_mode="pru1in"
 				pruin_name=$(echo ${name} | sed 's/pr1_//g' | sed 's/pru_r31_/in/g')
 				name=${pruin_name}
 				pinsetting="PIN_INPUT"
-				got_pruin_pin="enable"
+				got_pru1in_pin="enable"
+				tabs=4
+				;;
+			pr*_pru0_gpo*)				  #pr1_pru*_pru_r30*)
+				valid_pin_mode="pru0out"
+				pruout_name=$(echo ${name} | sed 's/pr1_//g' | sed 's/pru_r30_/out/g')
+				name=${pruout_name}
+				pinsetting="PIN_OUTPUT_PULLDOWN | INPUT_EN"
+				got_pru0out_pin="enable"
+				;;
+			pr*_pru0_gpi*)
+				valid_pin_mode="pru0in"
+				pruin_name=$(echo ${name} | sed 's/pr1_//g' | sed 's/pru_r31_/in/g')
+				name=${pruin_name}
+				pinsetting="PIN_INPUT"
+				got_pru0in_pin="enable"
 				tabs=4
 				;;
 			spi0_d0|spi1_d0)
@@ -648,12 +750,28 @@ find_ball () {
 				got_uart_pin="enable"
 				tabs=2
 				;;
+			mcu_uart*_rxd|mcu_uart*_txd)
+				valid_pin_mode="mcu_uart"
+				uart_name=${name}
+				pinsetting="PIN_OUTPUT_PULLUP | INPUT_EN"
+				got_mcu_uart_pin="enable"
+				tabs=2
+				;;
+			mcu_timer*)
+				if [ "x${disable_timer}" = "x" ] ; then
+					valid_pin_mode="mcu_timer"
+					timer_name=${name}
+					pinsetting="PIN_OUTPUT_PULLUP | INPUT_EN"
+					got_mcu_timer_pin="enable"
+					tabs=2
+				fi
+				;;
 			esac
 
 			if [ ! "x${valid_pin_mode}" = "x" ] ; then
-				echo "	${pcbpin}_${valid_pin_mode}_pin: pinmux_${pcbpin}_${valid_pin_mode}_pin { pinctrl-single,pins = <" >> ${file}.dts
-				echo "		${pcbpin}( ${pinsetting} , MUX_MODE${mode}) ${pina_disable} >; };	/* ${PinID}.${name} */" >> ${file}.dts
-				#echo "	BONE_PIN(${pcbpin}, ${valid_pin_mode}, ${pcbpin}(${pinsetting} | MUX_MODE${mode}))" >> ${file}.dts
+				echo "	${pcbpin}_${valid_pin_mode}_pin: pinmux_${pcbpin}_${valid_pin_mode}_pin { pinctrl-single,pins = <" >> ${fileDTS}
+				echo "		${pcbpin}( ${pinsetting} , ${mode}) ${pina_disable} >; };	/* ${PinID}.${name} */" >> ${fileDTS}
+				#echo "	BONE_PIN(${pcbpin}, ${valid_pin_mode}, ${pcbpin}(${pinsetting} | ${mode}))" >> ${fileDTS}
 			fi
 		fi
 
@@ -665,7 +783,7 @@ find_ball () {
 
 
 
-echo "" >> ${file}.dts
+echo "" >> ${fileDTS}
 echo_pinmux
 echo_gpio
 
@@ -677,14 +795,14 @@ echo_gpio
 #0x32 = 0011 0010
 #0x37 = 0011 0111
 
-#0x05 : PIN_OUTPUT_PULLDOWN | MUX_MODE5
-#0x24 : PIN_OUTPUT_PULLDOWN | INPUT_EN | MUX_MODE4
-#0x26 : PIN_OUTPUT_PULLDOWN | INPUT_EN | MUX_MODE6
-#0x27 : PIN_OUTPUT_PULLDOWN | INPUT_EN | MUX_MODE7
-#0x2F : PIN_OUTPUT | INPUT_EN | MUX_MODE7
-#0x30 : PIN_OUTPUT_PULLUP | INPUT_EN | MUX_MODE0
-#0x32 : PIN_OUTPUT_PULLUP | INPUT_EN | MUX_MODE2
-#0x37 : PIN_OUTPUT_PULLUP | INPUT_EN | MUX_MODE7
+#0x05 : PIN_OUTPUT_PULLDOWN | 5
+#0x24 : PIN_OUTPUT_PULLDOWN | INPUT_EN | 4
+#0x26 : PIN_OUTPUT_PULLDOWN | INPUT_EN | 6
+#0x27 : PIN_OUTPUT_PULLDOWN | INPUT_EN | 7
+#0x2F : PIN_OUTPUT | INPUT_EN | 7
+#0x30 : PIN_OUTPUT_PULLUP | INPUT_EN | 0
+#0x32 : PIN_OUTPUT_PULLUP | INPUT_EN | 2
+#0x37 : PIN_OUTPUT_PULLUP | INPUT_EN | 7
 
 #			P9_17_default_pin: pinmux_P9_17_default_pin {
 #				pinctrl-single,pins = <0x15c  0x37>; };	/* Mode 7, Pull-Up, RxActive */
@@ -704,6 +822,7 @@ echo_gpio
 #				pinctrl-single,pins = <0x15c  0x34>; };	/* Mode 4, Pull-Up, RxActive */
 
 	echo "##################"
+	unset pcbpinA
 }
 
 if [ ! -f AM62x.json ] ; then
